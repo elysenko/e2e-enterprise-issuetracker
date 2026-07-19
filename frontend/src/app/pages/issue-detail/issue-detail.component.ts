@@ -1,12 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DataService } from '../../services/data.service';
-import { AuthService } from '../../services/auth.service';
 import {
-  Comment,
   IssueStatus,
   PRIORITY_LABELS,
   STATUS_LABELS,
@@ -32,7 +37,6 @@ export class IssueDetailComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly data = inject(DataService);
-  private readonly auth = inject(AuthService);
 
   readonly statusLabels = STATUS_LABELS;
   readonly priorityLabels = PRIORITY_LABELS;
@@ -46,24 +50,40 @@ export class IssueDetailComponent {
 
   readonly projectId = computed(() => this.params().get('projectId') ?? '');
   readonly issueId = computed(() => this.params().get('issueId') ?? '');
-  readonly issue = computed(() =>
-    this.data.issues().find((i) => i.id === this.issueId()),
-  );
+  readonly issue = computed(() => {
+    const current = this.data.currentIssue();
+    return current && current.id === this.issueId() ? current : undefined;
+  });
   readonly members = computed(() => this.data.membersForProject(this.projectId()));
   readonly comments = computed(() =>
     this.data.comments().filter((c) => c.issueId === this.issueId()),
   );
+
+  constructor() {
+    // Load the issue, its comments, and the project members whenever the
+    // routed ids change.
+    effect(() => {
+      const issueId = this.issueId();
+      if (issueId) {
+        this.data.loadIssue(issueId).subscribe();
+        this.data.loadComments(issueId).subscribe();
+      }
+    });
+    effect(() => {
+      const projectId = this.projectId();
+      if (projectId) {
+        this.data.loadProjectMembers(projectId).subscribe();
+      }
+    });
+  }
 
   readonly assignOpen = computed(() => this.query().get('modal') === 'assign');
   assignSelection = signal<string>('');
 
   setStatus(status: IssueStatus): void {
     const id = this.issueId();
-    this.data.issues.update((list) =>
-      list.map((i) =>
-        i.id === id ? { ...i, status, updatedAt: new Date(0).toISOString() } : i,
-      ),
-    );
+    if (!id) return;
+    this.data.updateIssue(id, { status }).subscribe();
   }
 
   openAssign(): void {
@@ -85,48 +105,17 @@ export class IssueDetailComponent {
 
   confirmAssign(): void {
     const id = this.issueId();
-    const assignee = this.data.userById(this.assignSelection() || null);
-    this.data.issues.update((list) =>
-      list.map((i) =>
-        i.id === id
-          ? {
-              ...i,
-              assigneeId: assignee?.id ?? null,
-              assigneeName: assignee?.name ?? null,
-              updatedAt: new Date(0).toISOString(),
-            }
-          : i,
-      ),
-    );
-    this.closeAssign();
+    if (!id) return;
+    const assigneeId = this.assignSelection() || null;
+    this.data.updateIssue(id, { assigneeId }).subscribe({
+      next: () => this.closeAssign(),
+      error: () => this.closeAssign(),
+    });
   }
 
   addComment(event: ReplyEvent): void {
-    const user = this.auth.currentUser();
     const id = this.issueId();
-    if (!user) return;
-    const now = new Date(0).toISOString();
-    const newComment: Comment = {
-      id: 'c' + (this.data.comments().length + 1) + '-' + event.body.length,
-      issueId: id,
-      authorId: user.id,
-      authorName: user.name,
-      parentId: event.parentId,
-      body: event.body,
-      createdAt: now,
-      replies: [],
-    };
-
-    if (event.parentId === null) {
-      this.data.comments.update((list) => [...list, newComment]);
-    } else {
-      this.data.comments.update((list) =>
-        list.map((c) =>
-          c.id === event.parentId
-            ? { ...c, replies: [...c.replies, newComment] }
-            : c,
-        ),
-      );
-    }
+    if (!id) return;
+    this.data.createComment(id, event.body, event.parentId).subscribe();
   }
 }

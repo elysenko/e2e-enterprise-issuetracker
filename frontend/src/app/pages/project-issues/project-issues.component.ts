@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  effect,
+  inject,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DataService } from '../../services/data.service';
@@ -23,11 +30,35 @@ import {
   templateUrl: './project-issues.component.html',
   styleUrl: './project-issues.component.css',
 })
-export class ProjectIssuesComponent {
+export class ProjectIssuesComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly data = inject(DataService);
   private readonly auth = inject(AuthService);
+
+  constructor() {
+    // Reload the issue list whenever the selected project or status filter
+    // changes (both derive from the URL).
+    effect(() => {
+      const projectId = this.projectId();
+      const status = this.activeStatus();
+      if (projectId) {
+        this.data.loadProjectIssues(projectId, status).subscribe();
+      }
+    });
+    // Members drive the assignee dropdown in the New Issue modal.
+    effect(() => {
+      const projectId = this.projectId();
+      if (projectId) {
+        this.data.loadProjectMembers(projectId).subscribe();
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    // Populate the project switcher dropdown in the list header.
+    this.data.loadProjects().subscribe();
+  }
 
   readonly statusLabels = STATUS_LABELS;
   readonly priorityLabels = PRIORITY_LABELS;
@@ -94,29 +125,32 @@ export class ProjectIssuesComponent {
   }
 
   createIssue(draft: NewIssueDraft): void {
-    const project = this.project();
-    const user = this.auth.currentUser();
-    if (!project || !user) return;
-    const assignee = this.data.userById(draft.assigneeId);
-    const now = new Date(0).toISOString();
-    this.data.issues.update((list) => [
-      {
-        id: 'i' + (list.length + 1) + '-' + draft.title.length,
-        projectId: project.id,
-        projectName: project.name,
+    const projectId = this.projectId();
+    if (!projectId) return;
+    this.data
+      .createIssue(projectId, {
         title: draft.title,
         description: draft.description,
         priority: draft.priority,
-        status: 'OPEN',
-        assigneeId: assignee?.id ?? null,
-        assigneeName: assignee?.name ?? null,
-        createdBy: user.id,
-        createdByName: user.name,
-        createdAt: now,
-        updatedAt: now,
-      },
-      ...list,
-    ]);
-    this.closeModal();
+        assigneeId: draft.assigneeId,
+      })
+      .subscribe({
+        next: (issue) => {
+          const refresh = () =>
+            this.data
+              .loadProjectIssues(projectId, this.activeStatus())
+              .subscribe();
+          // The create endpoint sets creator/status; apply the assignee, if
+          // chosen, as a follow-up PATCH, then refresh the list.
+          if (draft.assigneeId) {
+            this.data
+              .updateIssue(issue.id, { assigneeId: draft.assigneeId })
+              .subscribe({ next: refresh, error: refresh });
+          } else {
+            refresh();
+          }
+          this.closeModal();
+        },
+      });
   }
 }

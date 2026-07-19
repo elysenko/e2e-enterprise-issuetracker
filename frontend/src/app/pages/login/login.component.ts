@@ -26,10 +26,27 @@ export class LoginComponent {
       return;
     }
     this.submitting.set(true);
-    this.auth.login(this.email().trim());
+    this.auth.login(this.email().trim(), this.password()).subscribe({
+      error: (err) => {
+        this.submitting.set(false);
+        this.error.set(this.messageFor(err, 'Invalid email or password.'));
+      },
+    });
   }
 
   demo(): void {
-    this.auth.demoLogin();
+    this.error.set(null);
+    this.submitting.set(true);
+    this.auth.demoLogin().subscribe({
+      error: (err) => {
+        this.submitting.set(false);
+        this.error.set(this.messageFor(err, 'Could not start demo mode.'));
+      },
+    });
+  }
+
+  private messageFor(err: unknown, fallback: string): string {
+    const message = (err as { error?: { message?: string } })?.error?.message;
+    return typeof message === 'string' ? message : fallback;
   }
 }

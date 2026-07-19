@@ -31,7 +31,24 @@ export class SignupComponent {
       this.error.set('Passwords do not match.');
       return;
     }
+    if (this.password().length < 6) {
+      this.error.set('Password must be at least 6 characters.');
+      return;
+    }
     this.submitting.set(true);
-    this.auth.signup(this.name().trim(), this.email().trim());
+    this.auth
+      .signup(this.name().trim(), this.email().trim(), this.password())
+      .subscribe({
+        error: (err) => {
+          this.submitting.set(false);
+          const message = (err as { error?: { message?: string } })?.error
+            ?.message;
+          this.error.set(
+            typeof message === 'string'
+              ? message
+              : 'Could not create your account.',
+          );
+        },
+      });
   }
 }

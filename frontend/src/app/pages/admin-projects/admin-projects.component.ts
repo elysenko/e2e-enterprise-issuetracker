@@ -1,7 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
-import { AuthService } from '../../services/auth.service';
 import { Project, initials } from '../../models';
 
 @Component({
@@ -12,9 +17,8 @@ import { Project, initials } from '../../models';
   templateUrl: './admin-projects.component.html',
   styleUrl: './admin-projects.component.css',
 })
-export class AdminProjectsComponent {
+export class AdminProjectsComponent implements OnInit {
   private readonly data = inject(DataService);
-  private readonly auth = inject(AuthService);
 
   readonly projects = this.data.projects;
   readonly users = this.data.users;
@@ -26,6 +30,11 @@ export class AdminProjectsComponent {
 
   // per-project member selection
   memberSelection = signal<Record<string, string>>({});
+
+  ngOnInit(): void {
+    this.data.loadProjects().subscribe();
+    this.data.loadUsers().subscribe();
+  }
 
   memberNames(project: Project): string[] {
     return this.users()
@@ -43,21 +52,23 @@ export class AdminProjectsComponent {
       this.error.set('Project name is required.');
       return;
     }
-    const user = this.auth.currentUser();
-    this.data.projects.update((list) => [
-      ...list,
-      {
-        id: 'p' + (list.length + 1),
-        name: this.name().trim(),
-        description: this.description().trim() || 'No description provided.',
-        createdBy: user?.id ?? 'u1',
-        createdAt: new Date(0).toISOString(),
-        memberIds: user ? [user.id] : [],
-        openIssueCount: 0,
-      },
-    ]);
-    this.name.set('');
-    this.description.set('');
+    this.data
+      .createProject(this.name().trim(), this.description().trim())
+      .subscribe({
+        next: () => {
+          this.name.set('');
+          this.description.set('');
+        },
+        error: (err) => {
+          const message = (err as { error?: { message?: string } })?.error
+            ?.message;
+          this.error.set(
+            typeof message === 'string'
+              ? message
+              : 'Could not create the project.',
+          );
+        },
+      });
   }
 
   selectionFor(projectId: string): string {
@@ -71,13 +82,8 @@ export class AdminProjectsComponent {
   addMember(project: Project): void {
     const userId = this.selectionFor(project.id);
     if (!userId) return;
-    this.data.projects.update((list) =>
-      list.map((p) =>
-        p.id === project.id
-          ? { ...p, memberIds: [...p.memberIds, userId] }
-          : p,
-      ),
-    );
-    this.setSelection(project.id, '');
+    this.data.addMember(project.id, userId).subscribe({
+      next: () => this.setSelection(project.id, ''),
+    });
   }
 }

@@ -1,150 +1,192 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, tap } from 'rxjs';
 import {
   Comment,
   Issue,
+  IssueStatus,
+  Priority,
   Project,
+  Role,
   ServiceSetting,
   User,
 } from '../models';
+import { API_BASE } from './api';
+
+export interface NewIssueInput {
+  title: string;
+  description: string;
+  priority: Priority;
+  assigneeId: string | null;
+}
 
 /**
- * Central mock-data store for the mockup.
- *
- * Every collection the backend will eventually provide is exposed as a
- * `signal<T[]>([...])`. The downstream `mockup_cleaner` stage clears these to
- * empty signals and `service_agent` wires them to the real API client — so all
- * seed data MUST live inside these signal wrappers.
+ * Live data layer for the Issue Tracker. Every collection the UI reads is held
+ * in a signal that is populated from the NestJS REST API (`/api/*`); mutations
+ * POST/PATCH to the backend and then refresh the relevant signal. Components
+ * call the `load*` methods on init and read the signals reactively — the same
+ * shape the mockup exposed, now backed by real persistence.
  */
 @Injectable({ providedIn: 'root' })
 export class DataService {
-  readonly users = signal<User[]>([
-    { id: 'u1', email: 'ada@acme.io', name: 'Ada Lovelace', role: 'ADMIN', createdAt: '2026-06-01T09:00:00Z' },
-    { id: 'u2', email: 'grace@acme.io', name: 'Grace Hopper', role: 'MEMBER', createdAt: '2026-06-02T09:00:00Z' },
-    { id: 'u3', email: 'linus@acme.io', name: 'Linus Torvalds', role: 'MEMBER', createdAt: '2026-06-03T09:00:00Z' },
-    { id: 'u4', email: 'margaret@acme.io', name: 'Margaret Hamilton', role: 'MEMBER', createdAt: '2026-06-05T09:00:00Z' },
-  ]);
+  private readonly http = inject(HttpClient);
 
-  readonly projects = signal<Project[]>([
-    {
-      id: 'p1',
-      name: 'Payments Platform',
-      description: 'Core billing, invoicing and subscription services.',
-      createdBy: 'u1',
-      createdAt: '2026-06-10T09:00:00Z',
-      memberIds: ['u1', 'u2', 'u3'],
-      openIssueCount: 3,
-    },
-    {
-      id: 'p2',
-      name: 'Mobile App',
-      description: 'iOS and Android client for the customer portal.',
-      createdBy: 'u1',
-      createdAt: '2026-06-12T09:00:00Z',
-      memberIds: ['u1', 'u2', 'u4'],
-      openIssueCount: 2,
-    },
-    {
-      id: 'p3',
-      name: 'Data Warehouse',
-      description: 'Analytics pipeline and reporting infrastructure.',
-      createdBy: 'u1',
-      createdAt: '2026-06-15T09:00:00Z',
-      memberIds: ['u1', 'u3'],
-      openIssueCount: 1,
-    },
-  ]);
+  readonly users = signal<User[]>([]);
+  readonly projects = signal<Project[]>([]);
+  readonly issues = signal<Issue[]>([]);
+  readonly currentIssue = signal<Issue | null>(null);
+  readonly comments = signal<Comment[]>([]);
+  readonly projectMembers = signal<User[]>([]);
+  readonly settings = signal<ServiceSetting[]>([]);
 
-  readonly issues = signal<Issue[]>([
-    {
-      id: 'i1', projectId: 'p1', projectName: 'Payments Platform',
-      title: 'Refund webhook retries indefinitely',
-      description: 'When a refund fails downstream, the webhook consumer keeps retrying without a backoff cap, flooding the queue.',
-      priority: 'HIGH', status: 'IN_PROGRESS', assigneeId: 'u2', assigneeName: 'Grace Hopper',
-      createdBy: 'u1', createdByName: 'Ada Lovelace',
-      createdAt: '2026-07-10T10:00:00Z', updatedAt: '2026-07-17T14:30:00Z',
-    },
-    {
-      id: 'i2', projectId: 'p1', projectName: 'Payments Platform',
-      title: 'Invoice PDF totals rounding error',
-      description: 'Line-item totals are rounded per-row instead of on the sum, causing off-by-one-cent discrepancies.',
-      priority: 'MEDIUM', status: 'OPEN', assigneeId: null, assigneeName: null,
-      createdBy: 'u3', createdByName: 'Linus Torvalds',
-      createdAt: '2026-07-12T11:00:00Z', updatedAt: '2026-07-12T11:00:00Z',
-    },
-    {
-      id: 'i3', projectId: 'p1', projectName: 'Payments Platform',
-      title: 'Add proration support to plan upgrades',
-      description: 'Mid-cycle upgrades should prorate the difference rather than charging the full new plan price.',
-      priority: 'LOW', status: 'OPEN', assigneeId: 'u3', assigneeName: 'Linus Torvalds',
-      createdBy: 'u1', createdByName: 'Ada Lovelace',
-      createdAt: '2026-07-14T08:20:00Z', updatedAt: '2026-07-15T09:10:00Z',
-    },
-    {
-      id: 'i4', projectId: 'p2', projectName: 'Mobile App',
-      title: 'Push notifications not delivered on Android 14',
-      description: 'Foreground service restrictions in Android 14 are dropping our notification channel silently.',
-      priority: 'HIGH', status: 'OPEN', assigneeId: 'u4', assigneeName: 'Margaret Hamilton',
-      createdBy: 'u2', createdByName: 'Grace Hopper',
-      createdAt: '2026-07-11T13:00:00Z', updatedAt: '2026-07-16T10:00:00Z',
-    },
-    {
-      id: 'i5', projectId: 'p2', projectName: 'Mobile App',
-      title: 'Dark mode contrast fails on settings screen',
-      description: 'Secondary text fails WCAG AA against the dark surface. Update the token mapping.',
-      priority: 'MEDIUM', status: 'RESOLVED', assigneeId: 'u2', assigneeName: 'Grace Hopper',
-      createdBy: 'u4', createdByName: 'Margaret Hamilton',
-      createdAt: '2026-07-05T09:00:00Z', updatedAt: '2026-07-09T16:00:00Z',
-    },
-    {
-      id: 'i6', projectId: 'p3', projectName: 'Data Warehouse',
-      title: 'Nightly ETL job exceeds memory limit',
-      description: 'The aggregation step loads the full fact table into memory; needs a streaming/windowed rewrite.',
-      priority: 'HIGH', status: 'OPEN', assigneeId: null, assigneeName: null,
-      createdBy: 'u3', createdByName: 'Linus Torvalds',
-      createdAt: '2026-07-13T07:00:00Z', updatedAt: '2026-07-13T07:00:00Z',
-    },
-  ]);
+  // ---- Loaders ----
+  loadUsers(): Observable<User[]> {
+    return this.http
+      .get<User[]>(`${API_BASE}/users`)
+      .pipe(tap((users) => this.users.set(users)));
+  }
 
-  readonly comments = signal<Comment[]>([
-    {
-      id: 'c1', issueId: 'i1', authorId: 'u1', authorName: 'Ada Lovelace', parentId: null,
-      body: 'This is causing on-call pages every night. Bumping to high priority.',
-      createdAt: '2026-07-15T09:30:00Z',
-      replies: [
-        {
-          id: 'c2', issueId: 'i1', authorId: 'u2', authorName: 'Grace Hopper', parentId: 'c1',
-          body: 'Agreed. I have a fix in progress that adds an exponential backoff with a max of 5 retries.',
-          createdAt: '2026-07-15T10:05:00Z', replies: [],
-        },
-      ],
-    },
-    {
-      id: 'c3', issueId: 'i1', authorId: 'u3', authorName: 'Linus Torvalds', parentId: null,
-      body: 'Make sure we emit a metric when we hit the retry cap so we can alert on it.',
-      createdAt: '2026-07-16T11:00:00Z', replies: [],
-    },
-  ]);
+  loadProjects(): Observable<Project[]> {
+    return this.http
+      .get<Project[]>(`${API_BASE}/projects`)
+      .pipe(tap((projects) => this.projects.set(projects)));
+  }
 
-  readonly settings = signal<ServiceSetting[]>([
-    {
-      service: 'postgresql', label: 'PostgreSQL', configured: true,
-      keys: [
-        { key: 'POSTGRES_HOST', label: 'Host', maskedValue: 'db.internal.•••••' },
-        { key: 'POSTGRES_USER', label: 'User', maskedValue: 'issuetracker' },
-        { key: 'POSTGRES_PASSWORD', label: 'Password', maskedValue: '••••••••••' },
-      ],
-    },
-    {
-      service: 'minio', label: 'MinIO Object Storage', configured: false,
-      keys: [
-        { key: 'MINIO_ENDPOINT', label: 'Endpoint', maskedValue: '' },
-        { key: 'MINIO_ACCESS_KEY', label: 'Access Key', maskedValue: '' },
-        { key: 'MINIO_SECRET_KEY', label: 'Secret Key', maskedValue: '' },
-      ],
-    },
-  ]);
+  loadDashboardIssues(): Observable<Issue[]> {
+    return this.http
+      .get<Issue[]>(`${API_BASE}/dashboard/issues`)
+      .pipe(tap((issues) => this.issues.set(issues)));
+  }
 
-  // ---- Derived selectors ----
+  loadProjectIssues(
+    projectId: string,
+    status?: IssueStatus | 'ALL',
+  ): Observable<Issue[]> {
+    let params = new HttpParams();
+    if (status && status !== 'ALL') {
+      params = params.set('status', status);
+    }
+    return this.http
+      .get<Issue[]>(`${API_BASE}/projects/${projectId}/issues`, { params })
+      .pipe(tap((issues) => this.issues.set(issues)));
+  }
+
+  loadProjectMembers(projectId: string): Observable<User[]> {
+    return this.http
+      .get<User[]>(`${API_BASE}/projects/${projectId}/members`)
+      .pipe(tap((members) => this.projectMembers.set(members)));
+  }
+
+  loadIssue(issueId: string): Observable<Issue> {
+    return this.http
+      .get<Issue>(`${API_BASE}/issues/${issueId}`)
+      .pipe(tap((issue) => this.currentIssue.set(issue)));
+  }
+
+  loadComments(issueId: string): Observable<Comment[]> {
+    return this.http
+      .get<Comment[]>(`${API_BASE}/issues/${issueId}/comments`)
+      .pipe(tap((comments) => this.comments.set(comments)));
+  }
+
+  loadSettings(): Observable<ServiceSetting[]> {
+    return this.http
+      .get<ServiceSetting[]>(`${API_BASE}/admin/settings`)
+      .pipe(tap((settings) => this.settings.set(settings)));
+  }
+
+  // ---- Mutations ----
+  createProject(name: string, description: string): Observable<Project> {
+    return this.http
+      .post<Project>(`${API_BASE}/projects`, { name, description })
+      .pipe(tap((project) => this.projects.update((list) => [project, ...list])));
+  }
+
+  addMember(projectId: string, userId: string): Observable<User[]> {
+    return this.http
+      .post<User[]>(`${API_BASE}/projects/${projectId}/members`, { userId })
+      .pipe(
+        tap((members) => {
+          this.projectMembers.set(members);
+          this.projects.update((list) =>
+            list.map((p) =>
+              p.id === projectId
+                ? { ...p, memberIds: members.map((m) => m.id) }
+                : p,
+            ),
+          );
+        }),
+      );
+  }
+
+  createIssue(projectId: string, input: NewIssueInput): Observable<Issue> {
+    return this.http
+      .post<Issue>(`${API_BASE}/projects/${projectId}/issues`, {
+        title: input.title,
+        description: input.description,
+        priority: input.priority,
+      })
+      .pipe(
+        tap((issue) => {
+          // If the new issue has an assignee, apply it in a follow-up patch —
+          // the create endpoint sets creator/status only.
+          this.issues.update((list) => [issue, ...list]);
+        }),
+      );
+  }
+
+  updateIssue(
+    issueId: string,
+    patch: Partial<
+      Pick<Issue, 'title' | 'description' | 'priority' | 'status' | 'assigneeId'>
+    >,
+  ): Observable<Issue> {
+    return this.http
+      .patch<Issue>(`${API_BASE}/issues/${issueId}`, patch)
+      .pipe(
+        tap((issue) => {
+          this.currentIssue.set(issue);
+          this.issues.update((list) =>
+            list.map((i) => (i.id === issue.id ? issue : i)),
+          );
+        }),
+      );
+  }
+
+  createComment(
+    issueId: string,
+    body: string,
+    parentId: string | null,
+  ): Observable<Comment> {
+    return this.http
+      .post<Comment>(`${API_BASE}/issues/${issueId}/comments`, {
+        body,
+        parentId,
+      })
+      .pipe(tap(() => this.loadComments(issueId).subscribe()));
+  }
+
+  updateUserRole(userId: string, role: Role): Observable<User> {
+    return this.http
+      .patch<User>(`${API_BASE}/users/${userId}`, { role })
+      .pipe(
+        tap((user) =>
+          this.users.update((list) =>
+            list.map((u) => (u.id === user.id ? user : u)),
+          ),
+        ),
+      );
+  }
+
+  saveSettings(
+    entries: { key: string; value: string }[],
+  ): Observable<ServiceSetting[]> {
+    return this.http
+      .patch<ServiceSetting[]>(`${API_BASE}/admin/settings`, entries)
+      .pipe(tap((settings) => this.settings.set(settings)));
+  }
+
+  // ---- Derived selectors (read from the loaded signals) ----
   projectById(id: string): Project | undefined {
     return this.projects().find((p) => p.id === id);
   }
@@ -156,10 +198,9 @@ export class DataService {
     return this.issues().find((i) => i.id === id);
   }
 
-  membersForProject(projectId: string): User[] {
-    const project = this.projectById(projectId);
-    if (!project) return [];
-    return this.users().filter((u) => project.memberIds.includes(u.id));
+  /** Members of the currently loaded project (populated by loadProjectMembers). */
+  membersForProject(_projectId: string): User[] {
+    return this.projectMembers();
   }
 
   commentsForIssue = (issueId: string) =>
@@ -167,6 +208,7 @@ export class DataService {
 
   userById(id: string | null): User | undefined {
     if (!id) return undefined;
-    return this.users().find((u) => u.id === id);
+    const all = [...this.users(), ...this.projectMembers()];
+    return all.find((u) => u.id === id);
   }
 }

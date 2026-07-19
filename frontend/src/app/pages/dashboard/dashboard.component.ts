@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DataService } from '../../services/data.service';
 import {
@@ -16,8 +22,12 @@ import {
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   private readonly data = inject(DataService);
+
+  ngOnInit(): void {
+    this.data.loadDashboardIssues().subscribe();
+  }
 
   readonly statusLabels = STATUS_LABELS;
   readonly priorityLabels = PRIORITY_LABELS;

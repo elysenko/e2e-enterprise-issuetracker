@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DataService } from '../../services/data.service';
 import { Role, initials } from '../../models';
@@ -11,17 +16,19 @@ import { Role, initials } from '../../models';
   templateUrl: './admin-users.component.html',
   styleUrl: './admin-users.component.css',
 })
-export class AdminUsersComponent {
+export class AdminUsersComponent implements OnInit {
   private readonly data = inject(DataService);
 
   readonly users = this.data.users;
   readonly initials = initials;
   readonly roles: Role[] = ['ADMIN', 'MEMBER'];
 
+  ngOnInit(): void {
+    this.data.loadUsers().subscribe();
+  }
+
   setRole(userId: string, role: Role): void {
-    this.data.users.update((list) =>
-      list.map((u) => (u.id === userId ? { ...u, role } : u)),
-    );
+    this.data.updateUserRole(userId, role).subscribe();
   }
 
   roleClass(role: Role): string {
