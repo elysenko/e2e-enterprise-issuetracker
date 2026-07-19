@@ -76,12 +76,12 @@ button {
 }
 
 .btn-primary {
-  background: var(--color-success);
+  background: var(--color-primary);
   color: var(--color-primary-contrast);
 }
 
 .btn-primary:hover {
-  background: var(--color-success-hover);
+  background: var(--color-primary-hover);
 }
 
 .btn-secondary {

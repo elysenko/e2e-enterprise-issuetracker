@@ -5,7 +5,10 @@ RUN apk add --no-cache openssl
 # Dummy URL satisfies `prisma generate` at build time — no real DB needed.
 ENV DATABASE_URL="postgresql://x:x@localhost:5432/x"
 COPY package*.json ./
-RUN npm ci
+# --include=dev guarantees build tools (@nestjs/cli → `nest`, typescript,
+# prisma CLI) install even when the build runner has NODE_ENV=production set,
+# which would otherwise make `npm ci` omit devDependencies and break `nest build`.
+RUN npm ci --include=dev
 COPY . .
 RUN npx prisma generate
 RUN npm run build \
