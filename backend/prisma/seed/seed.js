@@ -6,12 +6,12 @@
  * Usage:  node prisma/seed/seed.js
  * Called by: npx prisma db seed  (via package.json "prisma.seed" field)
  *
- * NOTE: This base seed creates users without passwords (base schema has no password column).
- * When the coder adds password-based auth, this file MUST be updated to upsert password hashes.
- * See coder.md constraints: "Seed script must be production-runnable."
+ * Seeds password-based users so the printed SEED_CRED values can log in via
+ * POST /api/auth/login. Passwords are bcrypt-hashed to match auth.service.
  */
 const { PrismaClient } = require('@prisma/client');
 const { createHash } = require('crypto');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
@@ -23,17 +23,18 @@ function derivePassword(email) {
 }
 
 const SEED_USERS = [
-  { email: 'admin@example.com', name: 'Admin User',   role: 'ADMIN' },
-  { email: 'user@example.com',  name: 'Regular User', role: 'USER'  },
+  { email: 'admin@example.com', name: 'Admin User', role: 'ADMIN' },
+  { email: 'user@example.com', name: 'Regular User', role: 'USER' },
 ];
 
 async function main() {
   for (const u of SEED_USERS) {
     const password = derivePassword(u.email);
+    const hash = bcrypt.hashSync(password, 10);
     await prisma.user.upsert({
-      where:  { email: u.email },
-      update: { name: u.name, role: u.role },
-      create: { email: u.email, name: u.name, role: u.role },
+      where: { email: u.email },
+      update: { name: u.name, role: u.role, password: hash },
+      create: { email: u.email, name: u.name, role: u.role, password: hash },
     });
     console.log(`SEED_CRED ${u.role} ${u.email} ${password}`);
   }
