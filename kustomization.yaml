@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: colossus-e2e-enterprise-issuetracker
+resources:
+  - k8s/deployment.yaml
+  - k8s/service.yaml
+  - k8s/ingress.yaml
+images:
+  - name: ubuntu:30500/e2e-enterprise-issuetracker
+    digest: sha256:af03f3a1b3631f93fecefef74c46941045945e567bf74ab68080ef2cc96670f3
+# Redeploy:  kubectl apply -k . (re-applies this exact image)
+# Rebuild:   re-trigger the deploy pipeline for branch main in Colossus

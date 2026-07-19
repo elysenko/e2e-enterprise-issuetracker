@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: e2e-enterprise-issuetracker
+  namespace: colossus-e2e-enterprise-issuetracker
+  labels:
+    app: e2e-enterprise-issuetracker
+    managed-by: colossus
+spec:
+  type: ClusterIP
+  selector:
+    app: e2e-enterprise-issuetracker
+  ports:
+    - port: 80
+      targetPort: 8080

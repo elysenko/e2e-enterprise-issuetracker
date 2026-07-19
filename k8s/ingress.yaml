@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: e2e-enterprise-issuetracker
+  namespace: colossus-e2e-enterprise-issuetracker
+  labels:
+    app: e2e-enterprise-issuetracker
+    managed-by: colossus
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: ubuntu.desmana-truck.ts.net
+      http:
+        paths:
+          - path: /e2e-enterprise-issuetracker(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: e2e-enterprise-issuetracker
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - ubuntu.desmana-truck.ts.net
+      secretName: colossus-shared-tls
