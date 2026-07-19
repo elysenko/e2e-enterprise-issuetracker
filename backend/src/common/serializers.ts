@@ -38,7 +38,9 @@ export function serializeUser(u: User): UserDto {
 type ProjectWithRelations = Project & {
   members?: ProjectMember[];
   _count?: { issues?: number };
-  issues?: Issue[];
+  // Callers may pass fully-hydrated issues or a narrow `select` (id/status only),
+  // so require just the fields serializeProject actually reads.
+  issues?: Array<Pick<Issue, 'id'> & Partial<Pick<Issue, 'status'>>>;
 };
 
 export function serializeProject(p: ProjectWithRelations, openIssueCount?: number) {

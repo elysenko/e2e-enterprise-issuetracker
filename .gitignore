@@ -6,6 +6,9 @@ dist/
 out-tsc/
 /tmp/
 
+# TypeScript incremental build cache — poisons `nest build` if shipped.
+*.tsbuildinfo
+
 # Angular build cache
 .angular/
 

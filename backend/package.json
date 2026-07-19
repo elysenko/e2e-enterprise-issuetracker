@@ -14,7 +14,7 @@
     "test": "jest",
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
-    "prisma:seed": "ts-node prisma/seed.ts"
+    "prisma:seed": "node prisma/seed/seed.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",

@@ -1,5 +1,5 @@
 {
   "ready_testid": "app-ready",
-  "expect_text": [],
+  "expect_text": ["issuetrack", "sign in to your team workspace", "welcome back"],
   "reject_signatures": ["home-title\">Users<", "Loading...", "Failed to load users."]
 }

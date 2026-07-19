@@ -1,3 +1,6 @@
 node_modules
 dist
 .env*
+# Incremental build cache — if copied into the image it makes `nest build`
+# (deleteOutDir + incremental) skip re-emitting dist/main.js. Never ship it.
+*.tsbuildinfo
