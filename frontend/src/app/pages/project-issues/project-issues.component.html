@@ -2,6 +2,19 @@
   @if (project(); as project) {
     <a class="back-link" routerLink="/projects">← All projects</a>
 
+    <div class="project-filter">
+      <label for="project-select">Project</label>
+      <select
+        id="project-select"
+        class="select project-select"
+        (change)="onProjectChange($event)"
+      >
+        @for (p of projects(); track p.id) {
+          <option [value]="p.id" [selected]="p.id === projectId()">{{ p.name }}</option>
+        }
+      </select>
+    </div>
+
     <header class="page-head">
       <div>
         <h1 class="page-title">{{ project.name }}</h1>

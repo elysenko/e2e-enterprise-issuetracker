@@ -10,5 +10,16 @@
       }
     ]
   },
-  "_component_requirements": {}
+  "_component_requirements": {
+    "_global": {
+      "requirements": [
+        {
+          "text": "Revision: make the primary action button green, and add a project filter dropdown to the top of the issue list header.",
+          "type": "behavioral",
+          "source": "feedback",
+          "rev": 1
+        }
+      ]
+    }
+  }
 }

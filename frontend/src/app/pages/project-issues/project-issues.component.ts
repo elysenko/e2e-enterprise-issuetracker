@@ -40,6 +40,7 @@ export class ProjectIssuesComponent {
   readonly projectId = computed(() => this.params().get('projectId') ?? '');
   readonly project = computed(() => this.data.projectById(this.projectId()));
   readonly members = computed(() => this.data.membersForProject(this.projectId()));
+  readonly projects = computed(() => this.data.projects());
 
   readonly activeStatus = computed<IssueStatus | 'ALL'>(() => {
     const s = this.query().get('status');
@@ -60,6 +61,13 @@ export class ProjectIssuesComponent {
     const status = this.activeStatus();
     return status === 'ALL' ? all : all.filter((i) => i.status === status);
   });
+
+  onProjectChange(event: Event): void {
+    const id = (event.target as HTMLSelectElement).value;
+    if (id && id !== this.projectId()) {
+      this.router.navigate(['/projects', id]);
+    }
+  }
 
   setStatus(status: IssueStatus | 'ALL'): void {
     this.router.navigate([], {
