@@ -1,0 +1,40 @@
+<section data-flow="projects-list">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">Projects</h1>
+      <p class="page-subtitle">Projects you belong to.</p>
+    </div>
+    @if (isAdmin()) {
+      <a class="btn btn-primary" routerLink="/admin/projects">+ New project</a>
+    }
+  </header>
+
+  @if (projects().length === 0) {
+    <div class="card empty-state">
+      <span class="empty-icon">📁</span>
+      <p>You're not part of any projects yet.</p>
+    </div>
+  } @else {
+    <div class="project-grid">
+      @for (project of projects(); track project.id) {
+        <a class="card project-card" [routerLink]="['/projects', project.id]">
+          <div class="project-top">
+            <h2 class="project-name">{{ project.name }}</h2>
+            <span class="badge open-badge">{{ project.openIssueCount }} open</span>
+          </div>
+          <p class="project-desc">{{ project.description }}</p>
+          <div class="project-foot">
+            <div class="avatars">
+              @for (name of memberNames(project.memberIds); track name) {
+                <span class="avatar avatar-sm" [title]="name">{{ initials(name) }}</span>
+              }
+            </div>
+            <span class="member-count">
+              {{ project.memberIds.length }} member{{ project.memberIds.length === 1 ? '' : 's' }}
+            </span>
+          </div>
+        </a>
+      }
+    </div>
+  }
+</section>

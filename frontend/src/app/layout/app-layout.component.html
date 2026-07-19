@@ -1,0 +1,85 @@
+<div class="shell" data-flow="app-shell">
+  <!-- Desktop / tablet sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">◆</span>
+      <span class="brand-name">IssueTrack</span>
+    </div>
+
+    <nav class="nav">
+      <p class="nav-heading">Workspace</p>
+      @for (item of navItems(); track item.route) {
+        @if (!item.admin) {
+          <a
+            class="nav-link"
+            [routerLink]="item.route"
+            routerLinkActive="active"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span>{{ item.label }}</span>
+          </a>
+        }
+      }
+
+      @if (isAdmin()) {
+        <p class="nav-heading">Administration</p>
+        @for (item of navItems(); track item.route) {
+          @if (item.admin) {
+            <a
+              class="nav-link"
+              [routerLink]="item.route"
+              routerLinkActive="active"
+            >
+              <span class="nav-icon">{{ item.icon }}</span>
+              <span>{{ item.label }}</span>
+            </a>
+          }
+        }
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <span class="avatar">{{ userInitials() }}</span>
+        <div class="user-meta">
+          <span class="user-name">{{ user()?.name }}</span>
+          <span class="user-role">{{ user()?.role }}</span>
+        </div>
+      </div>
+      <button class="btn btn-ghost logout-btn" type="button" (click)="logout()">
+        Sign out
+      </button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <!-- Mobile top bar -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">◆</span>
+        <span class="brand-name">IssueTrack</span>
+      </div>
+      <button class="avatar-btn" type="button" (click)="logout()" aria-label="Sign out">
+        <span class="avatar">{{ userInitials() }}</span>
+      </button>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+
+  <!-- Mobile bottom tab bar -->
+  <nav class="tabbar">
+    @for (item of navItems(); track item.route) {
+      <a
+        class="tab"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+      >
+        <span class="tab-icon">{{ item.icon }}</span>
+        <span class="tab-label">{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+</div>

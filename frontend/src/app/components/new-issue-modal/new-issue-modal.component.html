@@ -1,0 +1,64 @@
+<div class="overlay" (click)="closed.emit()">
+  <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h2>New issue</h2>
+      <button class="btn btn-ghost close" type="button" (click)="closed.emit()" aria-label="Close">✕</button>
+    </div>
+
+    @if (error()) {
+      <div class="alert">{{ error() }}</div>
+    }
+
+    <form (ngSubmit)="submit()">
+      <div class="field">
+        <label for="title">Title</label>
+        <input
+          id="title" class="input" type="text" name="title"
+          placeholder="Short summary of the problem"
+          [ngModel]="title()" (ngModelChange)="title.set($event)"
+        />
+      </div>
+
+      <div class="field">
+        <label for="desc">Description</label>
+        <textarea
+          id="desc" class="textarea" name="desc"
+          placeholder="Steps to reproduce, expected vs actual…"
+          [ngModel]="description()" (ngModelChange)="description.set($event)"
+        ></textarea>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="priority">Priority</label>
+          <select
+            id="priority" class="select" name="priority"
+            [ngModel]="priority()" (ngModelChange)="priority.set($event)"
+          >
+            @for (p of priorities; track p) {
+              <option [value]="p">{{ priorityLabels[p] }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="assignee">Assignee</label>
+          <select
+            id="assignee" class="select" name="assignee"
+            [ngModel]="assigneeId()" (ngModelChange)="assigneeId.set($event)"
+          >
+            <option value="">Unassigned</option>
+            @for (m of members; track m.id) {
+              <option [value]="m.id">{{ m.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" type="button" (click)="closed.emit()">Cancel</button>
+        <button class="btn btn-primary" type="submit">Create issue</button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,60 @@
+<section data-flow="dashboard">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle">Issues across all of your projects.</p>
+    </div>
+  </header>
+
+  <div class="stat-grid">
+    <div class="card stat">
+      <span class="stat-value">{{ stats().total }}</span>
+      <span class="stat-label">Total issues</span>
+    </div>
+    <div class="card stat">
+      <span class="stat-value dot-open">{{ stats().open }}</span>
+      <span class="stat-label">Open</span>
+    </div>
+    <div class="card stat">
+      <span class="stat-value dot-progress">{{ stats().inProgress }}</span>
+      <span class="stat-label">In progress</span>
+    </div>
+    <div class="card stat">
+      <span class="stat-value dot-resolved">{{ stats().resolved }}</span>
+      <span class="stat-label">Resolved</span>
+    </div>
+  </div>
+
+  <h2 class="section-title">Recent activity</h2>
+
+  @if (recent().length === 0) {
+    <div class="card empty-state">
+      <span class="empty-icon">📭</span>
+      <p>No issues yet. Create a project and start tracking work.</p>
+    </div>
+  } @else {
+    <ul class="issue-list">
+      @for (issue of recent(); track issue.id) {
+        <li class="card issue-row">
+          <a
+            class="issue-link"
+            [routerLink]="['/projects', issue.projectId, 'issues', issue.id]"
+          >
+            <div class="issue-main">
+              <span class="issue-title">{{ issue.title }}</span>
+              <span class="issue-project">{{ issue.projectName }}</span>
+            </div>
+            <div class="issue-meta">
+              <span class="badge" [class]="priorityClass(issue.priority)">
+                {{ priorityLabels[issue.priority] }}
+              </span>
+              <span class="badge" [class]="statusClass(issue.status)">
+                {{ statusLabels[issue.status] }}
+              </span>
+            </div>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+</section>

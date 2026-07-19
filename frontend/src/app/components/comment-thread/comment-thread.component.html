@@ -1,0 +1,63 @@
+<div class="thread">
+  <!-- New top-level comment -->
+  <form class="composer" (ngSubmit)="submitTopLevel()">
+    <textarea
+      class="textarea"
+      name="newBody"
+      placeholder="Add a comment…"
+      [ngModel]="newBody()"
+      (ngModelChange)="newBody.set($event)"
+    ></textarea>
+    <div class="composer-actions">
+      <button class="btn btn-primary" type="submit" [disabled]="!newBody().trim()">Comment</button>
+    </div>
+  </form>
+
+  @if (comments.length === 0) {
+    <p class="thread-empty">No comments yet. Start the discussion.</p>
+  }
+
+  @for (comment of comments; track comment.id) {
+    <div class="comment">
+      <span class="avatar">{{ initials(comment.authorName) }}</span>
+      <div class="comment-body">
+        <div class="comment-head">
+          <span class="comment-author">{{ comment.authorName }}</span>
+          <span class="comment-time">{{ comment.createdAt | date: 'MMM d, y, h:mm a' }}</span>
+        </div>
+        <p class="comment-text">{{ comment.body }}</p>
+        <button class="reply-btn" type="button" (click)="startReply(comment.id)">Reply</button>
+
+        <!-- Nested replies (one level) -->
+        @for (child of comment.replies; track child.id) {
+          <div class="comment reply">
+            <span class="avatar">{{ initials(child.authorName) }}</span>
+            <div class="comment-body">
+              <div class="comment-head">
+                <span class="comment-author">{{ child.authorName }}</span>
+                <span class="comment-time">{{ child.createdAt | date: 'MMM d, y, h:mm a' }}</span>
+              </div>
+              <p class="comment-text">{{ child.body }}</p>
+            </div>
+          </div>
+        }
+
+        @if (replyingTo() === comment.id) {
+          <form class="composer reply-composer" (ngSubmit)="submitReply(comment.id)">
+            <textarea
+              class="textarea"
+              name="replyBody"
+              placeholder="Write a reply…"
+              [ngModel]="replyBody()"
+              (ngModelChange)="replyBody.set($event)"
+            ></textarea>
+            <div class="composer-actions">
+              <button class="btn btn-ghost" type="button" (click)="cancelReply()">Cancel</button>
+              <button class="btn btn-primary" type="submit" [disabled]="!replyBody().trim()">Reply</button>
+            </div>
+          </form>
+        }
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,42 @@
+<section data-flow="admin-users">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">Manage users</h1>
+      <p class="page-subtitle">Review accounts and adjust roles.</p>
+    </div>
+  </header>
+
+  <div class="card table-card">
+    <div class="table-head">
+      <span>User</span>
+      <span class="col-role">Role</span>
+    </div>
+
+    <ul class="user-list">
+      @for (user of users(); track user.id) {
+        <li class="user-row">
+          <div class="user-cell">
+            <span class="avatar">{{ initials(user.name) }}</span>
+            <div class="user-info">
+              <span class="user-name">{{ user.name }}</span>
+              <span class="user-email">{{ user.email }}</span>
+            </div>
+          </div>
+          <div class="role-cell">
+            <span class="badge" [class]="roleClass(user.role)">{{ user.role }}</span>
+            <select
+              class="select role-select"
+              [attr.name]="'role-' + user.id"
+              [ngModel]="user.role"
+              (ngModelChange)="setRole(user.id, $event)"
+            >
+              @for (r of roles; track r) {
+                <option [value]="r">{{ r }}</option>
+              }
+            </select>
+          </div>
+        </li>
+      }
+    </ul>
+  </div>
+</section>

@@ -1,0 +1,20 @@
+{
+  "testids": [
+    "app-ready"
+  ],
+  "headings": [
+    "Assign issue",
+    "Create your account",
+    "Dashboard",
+    "Discussion",
+    "Manage projects",
+    "Manage users",
+    "New issue",
+    "New project",
+    "Projects",
+    "Recent activity",
+    "Service settings",
+    "Welcome back"
+  ],
+  "source_dir": "/workspace/mockups/234ae669-bdc9-4d0b-9dae-1120f9a0d232"
+}

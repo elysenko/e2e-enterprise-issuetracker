@@ -1,0 +1,99 @@
+<section data-flow="issue-detail">
+  @if (issue(); as issue) {
+    <a class="back-link" [routerLink]="['/projects', projectId()]">← {{ issue.projectName }}</a>
+
+    <div class="detail-grid">
+      <div class="detail-main">
+        <div class="card issue-header">
+          <div class="badges">
+            <span class="badge" [class]="priorityClass(issue.priority)">
+              {{ priorityLabels[issue.priority] }} priority
+            </span>
+            <span class="badge" [class]="statusClass(issue.status)">
+              {{ statusLabels[issue.status] }}
+            </span>
+          </div>
+          <h1 class="issue-title">{{ issue.title }}</h1>
+          <p class="issue-desc">{{ issue.description }}</p>
+          <p class="issue-byline">
+            Opened by {{ issue.createdByName }} · updated {{ issue.updatedAt | date: 'MMM d, y' }}
+          </p>
+        </div>
+
+        <div class="card comments-card">
+          <h2 class="section-title">Discussion</h2>
+          <app-comment-thread
+            [comments]="comments()"
+            (reply)="addComment($event)"
+          />
+        </div>
+      </div>
+
+      <aside class="detail-side">
+        <div class="card side-card">
+          <h3 class="side-title">Status</h3>
+          <div class="status-control">
+            @for (s of statusOrder; track s) {
+              <button
+                class="status-btn"
+                type="button"
+                [class.active]="issue.status === s"
+                (click)="setStatus(s)"
+              >
+                {{ statusLabels[s] }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="card side-card">
+          <h3 class="side-title">Assignee</h3>
+          @if (issue.assigneeName) {
+            <div class="assignee">
+              <span class="avatar">{{ initials(issue.assigneeName) }}</span>
+              <span>{{ issue.assigneeName }}</span>
+            </div>
+          } @else {
+            <p class="unassigned">Unassigned</p>
+          }
+          <button class="btn btn-secondary btn-block" type="button" (click)="openAssign()">
+            {{ issue.assigneeName ? 'Reassign' : 'Assign' }}
+          </button>
+        </div>
+      </aside>
+    </div>
+
+    @if (assignOpen()) {
+      <div class="overlay" (click)="closeAssign()">
+        <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+          <div class="modal-head">
+            <h2>Assign issue</h2>
+            <button class="btn btn-ghost close" type="button" (click)="closeAssign()" aria-label="Close">✕</button>
+          </div>
+          <div class="field">
+            <label for="assignee">Project member</label>
+            <select
+              id="assignee" class="select" name="assignee"
+              [ngModel]="assignSelection()" (ngModelChange)="assignSelection.set($event)"
+            >
+              <option value="">Unassigned</option>
+              @for (m of members(); track m.id) {
+                <option [value]="m.id">{{ m.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-secondary" type="button" (click)="closeAssign()">Cancel</button>
+            <button class="btn btn-primary" type="button" (click)="confirmAssign()">Save</button>
+          </div>
+        </div>
+      </div>
+    }
+  } @else {
+    <div class="card empty-state">
+      <span class="empty-icon">🔍</span>
+      <p>Issue not found.</p>
+      <a class="btn btn-secondary" routerLink="/dashboard">Back to dashboard</a>
+    </div>
+  }
+</section>

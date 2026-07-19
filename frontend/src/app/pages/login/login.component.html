@@ -1,0 +1,57 @@
+<div class="auth-wrap" data-flow="login">
+  <div class="auth-card card">
+    <div class="auth-brand">
+      <span class="brand-mark">◆</span>
+      <span>IssueTrack</span>
+    </div>
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="page-subtitle">Sign in to your team workspace.</p>
+
+    @if (error()) {
+      <div class="alert" role="alert">{{ error() }}</div>
+    }
+
+    <form (ngSubmit)="submit()">
+      <div class="field">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          class="input"
+          type="email"
+          autocomplete="email"
+          placeholder="you@company.com"
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event)"
+          name="email"
+        />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          class="input"
+          type="password"
+          autocomplete="current-password"
+          placeholder="••••••••"
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+          name="password"
+        />
+      </div>
+
+      <button class="btn btn-primary btn-block" type="submit" [disabled]="submitting()">
+        {{ submitting() ? 'Signing in…' : 'Sign in' }}
+      </button>
+    </form>
+
+    <p class="auth-alt">
+      No account yet? <a routerLink="/signup">Create one</a>
+    </p>
+
+    <div class="demo-divider"><span>or</span></div>
+    <button class="btn btn-ghost btn-block demo-btn" type="button" (click)="demo()">
+      Skip login — explore Demo Mode
+    </button>
+  </div>
+</div>

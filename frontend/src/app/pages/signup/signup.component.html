@@ -1,0 +1,60 @@
+<div class="auth-wrap" data-flow="signup">
+  <div class="auth-card card">
+    <div class="auth-brand">
+      <span class="brand-mark">◆</span>
+      <span>IssueTrack</span>
+    </div>
+    <h1 class="auth-title">Create your account</h1>
+    <p class="page-subtitle">The first account in a workspace becomes the admin.</p>
+
+    @if (error()) {
+      <div class="alert" role="alert">{{ error() }}</div>
+    }
+
+    <form (ngSubmit)="submit()">
+      <div class="field">
+        <label for="name">Full name</label>
+        <input
+          id="name" class="input" type="text" name="name" autocomplete="name"
+          placeholder="Ada Lovelace"
+          [ngModel]="name()" (ngModelChange)="name.set($event)"
+        />
+      </div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input
+          id="email" class="input" type="email" name="email" autocomplete="email"
+          placeholder="you@company.com"
+          [ngModel]="email()" (ngModelChange)="email.set($event)"
+        />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input
+          id="password" class="input" type="password" name="password" autocomplete="new-password"
+          placeholder="••••••••"
+          [ngModel]="password()" (ngModelChange)="password.set($event)"
+        />
+      </div>
+
+      <div class="field">
+        <label for="confirm">Confirm password</label>
+        <input
+          id="confirm" class="input" type="password" name="confirm" autocomplete="new-password"
+          placeholder="••••••••"
+          [ngModel]="confirm()" (ngModelChange)="confirm.set($event)"
+        />
+      </div>
+
+      <button class="btn btn-primary btn-block" type="submit" [disabled]="submitting()">
+        {{ submitting() ? 'Creating account…' : 'Create account' }}
+      </button>
+    </form>
+
+    <p class="auth-alt">
+      Already have an account? <a routerLink="/login">Sign in</a>
+    </p>
+  </div>
+</div>

@@ -1,0 +1,50 @@
+<section data-flow="admin-settings">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">Service settings</h1>
+      <p class="page-subtitle">Configure credentials for connected services.</p>
+    </div>
+  </header>
+
+  <div class="settings-col">
+    @for (service of settings(); track service.service) {
+      <div class="card service-card">
+        <div class="service-head">
+          <div class="service-title">
+            <h2>{{ service.label }}</h2>
+            <code class="service-id">{{ service.service }}</code>
+          </div>
+          @if (service.configured) {
+            <span class="badge badge-status-resolved">● Configured</span>
+          } @else {
+            <span class="badge badge-priority-high">● Not configured</span>
+          }
+        </div>
+
+        <form (ngSubmit)="save(service)">
+          @for (k of service.keys; track k.key) {
+            <div class="field">
+              <label [attr.for]="service.service + '-' + k.key">{{ k.label }}</label>
+              <input
+                [id]="service.service + '-' + k.key"
+                class="input"
+                type="text"
+                [attr.name]="service.service + '-' + k.key"
+                [placeholder]="k.maskedValue || 'Enter ' + k.label"
+                [ngModel]="draftValue(service.service, k.key)"
+                (ngModelChange)="setDraft(service.service, k.key, $event)"
+              />
+            </div>
+          }
+
+          <div class="service-actions">
+            @if (savedFor() === service.service) {
+              <span class="saved-note">✓ Saved</span>
+            }
+            <button class="btn btn-primary" type="submit">Save credentials</button>
+          </div>
+        </form>
+      </div>
+    }
+  </div>
+</section>

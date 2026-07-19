@@ -1,0 +1,81 @@
+<section data-flow="admin-projects">
+  <header class="page-head">
+    <div>
+      <h1 class="page-title">Manage projects</h1>
+      <p class="page-subtitle">Create projects and assign team members.</p>
+    </div>
+  </header>
+
+  <div class="admin-grid">
+    <div class="card create-card">
+      <h2 class="section-title">New project</h2>
+      @if (error()) {
+        <div class="alert">{{ error() }}</div>
+      }
+      <form (ngSubmit)="createProject()">
+        <div class="field">
+          <label for="pname">Name</label>
+          <input
+            id="pname" class="input" type="text" name="pname"
+            placeholder="e.g. Billing Platform"
+            [ngModel]="name()" (ngModelChange)="name.set($event)"
+          />
+        </div>
+        <div class="field">
+          <label for="pdesc">Description</label>
+          <textarea
+            id="pdesc" class="textarea" name="pdesc"
+            placeholder="What is this project about?"
+            [ngModel]="description()" (ngModelChange)="description.set($event)"
+          ></textarea>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit">Create project</button>
+      </form>
+    </div>
+
+    <div class="projects-col">
+      @for (project of projects(); track project.id) {
+        <div class="card project-admin">
+          <div class="project-admin-head">
+            <div>
+              <h3 class="project-admin-name">{{ project.name }}</h3>
+              <p class="project-admin-desc">{{ project.description }}</p>
+            </div>
+            <span class="badge open-badge">{{ project.memberIds.length }} members</span>
+          </div>
+
+          <div class="members">
+            @for (name of memberNames(project); track name) {
+              <span class="member-pill">
+                <span class="avatar avatar-sm">{{ initials(name) }}</span>
+                {{ name }}
+              </span>
+            }
+          </div>
+
+          <div class="add-member">
+            <select
+              class="select"
+              [ngModel]="selectionFor(project.id)"
+              (ngModelChange)="setSelection(project.id, $event)"
+              [attr.name]="'member-' + project.id"
+            >
+              <option value="">Add a member…</option>
+              @for (u of nonMembers(project); track u.id) {
+                <option [value]="u.id">{{ u.name }}</option>
+              }
+            </select>
+            <button
+              class="btn btn-secondary"
+              type="button"
+              [disabled]="!selectionFor(project.id)"
+              (click)="addMember(project)"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
