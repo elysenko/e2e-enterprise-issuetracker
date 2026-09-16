@@ -1,0 +1,9 @@
+{
+  "frontend/src": {
+    "hex": 35,
+    "fontSize": 4,
+    "radius": 0,
+    "shadow": 1,
+    "undefinedToken": 1
+  }
+}

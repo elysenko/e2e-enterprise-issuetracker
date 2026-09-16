@@ -1,0 +1,71 @@
+{
+  "site": {
+    "name": "tu-prep-c2sto4b9",
+    "site_id": "tu-prep-c2sto4b9"
+  },
+  "meta": {
+    "generated_by": "declared"
+  },
+  "front_end": {
+    "pages": [
+      {
+        "name": "Projects",
+        "page_id": "admin-projects",
+        "url": "/admin/projects",
+        "linked_page_ids": []
+      },
+      {
+        "name": "Settings",
+        "page_id": "admin-settings",
+        "url": "/admin/settings",
+        "linked_page_ids": []
+      },
+      {
+        "name": "Users",
+        "page_id": "admin-users",
+        "url": "/admin/users",
+        "linked_page_ids": []
+      },
+      {
+        "name": "Dashboard",
+        "page_id": "dashboard",
+        "url": "/dashboard",
+        "linked_page_ids": []
+      },
+      {
+        "name": "Login",
+        "page_id": "login",
+        "url": "/login",
+        "linked_page_ids": []
+      },
+      {
+        "name": "Projects",
+        "page_id": "projects",
+        "url": "/projects",
+        "linked_page_ids": []
+      },
+      {
+        "name": ":projectId",
+        "page_id": "projects-project-d",
+        "url": "/projects/:projectId",
+        "linked_page_ids": []
+      },
+      {
+        "name": ":issueId",
+        "page_id": "projects-project-d-issues-issue-d",
+        "url": "/projects/:projectId/issues/:issueId",
+        "linked_page_ids": []
+      },
+      {
+        "name": "Signup",
+        "page_id": "signup",
+        "url": "/signup",
+        "linked_page_ids": []
+      }
+    ]
+  },
+  "back_end": {
+    "tables": []
+  },
+  "generated_by": "declared"
+}
